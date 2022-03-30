@@ -19,6 +19,7 @@ class CommonTools{
         static size_t writedata2file(void *ptr, size_t size, size_t nmemb, FILE *stream);
         // 文件下载接口
         static int download_file(const char* url, const char outfilename[FILENAME_MAX]);
+        static int download_file(const std::string& url, const std::string& outfilename);
         // http get 请求
         static CURLcode HttpGet(const std::string & strUrl, std::string & strResponse,int nTimeout);
         // htpp post 请求

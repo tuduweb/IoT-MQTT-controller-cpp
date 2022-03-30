@@ -14,6 +14,10 @@ size_t CommonTools::writedata2file(void *ptr, size_t size, size_t nmemb, FILE *s
     return written;
 }
 
+int CommonTools::download_file(const std::string& url, const std::string& outfilename) {
+    return CommonTools::download_file(url.c_str(), outfilename.c_str());
+}
+
 int CommonTools::download_file(const char* url, const char outfilename[FILENAME_MAX]){
     CURL *curl;
     FILE *fp;
