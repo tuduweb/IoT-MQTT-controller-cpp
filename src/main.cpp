@@ -48,10 +48,10 @@ int main(int argc, char* argv[]) {
     options.add_options()
     ("help", "Print help")
     ("s,status", "Check remote device status")
-    ("f,file", "File name", cxxopts::value<std::string>())
     ("a,action", "publish a action", cxxopts::value<std::string>())
     ("d,saveto", "file save path", cxxopts::value<std::string>())
-    ("u,update", "update app[dev]", cxxopts::value<std::string>())
+    //("u,update", "update app[dev]", cxxopts::value<std::string>())
+    //("f,file", "File name", cxxopts::value<std::string>())
     ;
 
     if(argc == 1)
@@ -103,7 +103,7 @@ int main(int argc, char* argv[]) {
         if (!outcome.IsSuccess())
         {
 
-            _res["status"].SetInt(-1);
+            _res["status"].SetInt(-2);
 
             rapidjson::Document _errorInfo;
             _errorInfo.SetObject();
@@ -203,10 +203,10 @@ int main(int argc, char* argv[]) {
         {
             // //RequestId=bec777c4-6bbb-4f9a-a3b8-084825a24c59, ErrorCode=FailedOperation.Timeout, ErrorMessage=调用超时
             // //RequestId=6254ed73-15a6-4854-afd4-d47166f019d0, ErrorCode=ResourceNotFound.DeviceNotExist, ErrorMessage=设备未创建或是已删除
-            std::cout << outcome.GetError().PrintAll() << endl;
-            cout << outcome.GetError().GetErrorMessage() << outcome.GetError().GetErrorCode() << endl;
+            //std::cout << outcome.GetError().PrintAll() << endl;
+            //cout << outcome.GetError().GetErrorMessage() << outcome.GetError().GetErrorCode() << endl;
 
-            _res["status"].SetInt(-1);
+            _res["status"].SetInt(-2);
 
             rapidjson::Document _errorInfo;
             _errorInfo.SetObject();
@@ -228,11 +228,12 @@ int main(int argc, char* argv[]) {
             StringBuffer _buffer;
             rapidjson::Writer<rapidjson::StringBuffer> writer(_buffer);
             _res.Accept(writer);
-            
             cout << _buffer.GetString() << endl;
             
             return -1;
         }
+
+        //得到了返回结果，即调用成功
         CallDeviceActionSyncResponse resp = outcome.GetResult();
 
         //result to json
@@ -241,22 +242,62 @@ int main(int argc, char* argv[]) {
 
         if(document["Status"].IsNull()) {
             //"FailedOperation.ActionUnreachable 设备未响应
+
+            _res["status"].SetInt(-1);
+
+            rapidjson::Document _errorInfo;
+            _errorInfo.SetObject();
+            _errorInfo.AddMember("msg", "FailedOperation.DeviceNoResponse", _errorInfo.GetAllocator());
+
+            _res.AddMember("info", _errorInfo, _res.GetAllocator());
+
+            StringBuffer _buffer;
+            rapidjson::Writer<rapidjson::StringBuffer> writer(_buffer);
+            _res.Accept(writer);
+            cout << _buffer.GetString() << endl;
+            
             return -1;
         }
 
         std::string _status = document["Status"].GetString();
-        cout << resp.ToJsonString() << endl;
+        //cout << resp.ToJsonString() << endl;
 
 
 
         if(_status.find("FailedOperation") != string::npos) {
             //"FailedOperation.ActionUnreachable 设备未开机
-            cout << _status << endl;
+            //cout << _status << endl;
+
+            _res["status"].SetInt(-1);
+
+            rapidjson::Document _errorInfo;
+            _errorInfo.SetObject();
+            _errorInfo.AddMember("msg", StringRef(_status.c_str()), _errorInfo.GetAllocator());
+            _res.AddMember("info", _errorInfo, _res.GetAllocator());
+
+            StringBuffer _buffer;
+            rapidjson::Writer<rapidjson::StringBuffer> writer(_buffer);
+            _res.Accept(writer);
+            cout << _buffer.GetString() << endl;
+
+
             return -1;
         }
 
         if(document["OutputParams"].IsString() && document["OutputParams"].GetStringLength() == 0) {
-            cout << "OutputParams is empty" << endl;
+
+            _res["status"].SetInt(-1);
+
+            rapidjson::Document _errorInfo;
+            _errorInfo.SetObject();
+            _errorInfo.AddMember("msg", "OutputParams is empty", _errorInfo.GetAllocator());
+            _res.AddMember("info", _errorInfo, _res.GetAllocator());
+
+            StringBuffer _buffer;
+            rapidjson::Writer<rapidjson::StringBuffer> writer(_buffer);
+            _res.Accept(writer);
+            cout << _buffer.GetString() << endl;
+
             return -1;
         }        
 
@@ -265,10 +306,10 @@ int main(int argc, char* argv[]) {
         outputDocument.Parse(_outputParams.c_str());
 
         //dump
-        for (Value::ConstMemberIterator itr = outputDocument.MemberBegin(); itr != outputDocument.MemberEnd(); ++itr)
-        {
-            printf("Type of member %s => %d\n", itr->name.GetString(), itr->value.IsNumber());
-        }
+        // for (Value::ConstMemberIterator itr = outputDocument.MemberBegin(); itr != outputDocument.MemberEnd(); ++itr)
+        // {
+        //     printf("Type of member %s => %d\n", itr->name.GetString(), itr->value.IsNumber());
+        // }
 
         string _imageKey = outputDocument["imageKey"].GetString();
         //判断key是否带后缀, 不带后缀需要添加上
@@ -283,10 +324,10 @@ int main(int argc, char* argv[]) {
         //组装
         string _savedFileName = _savePath + _imageKey;
 
-        int res = CommonTools::download_file("http://r9emzef08.hn-bkt.clouddn.com/pic-1648543280.jpg?e=1648546881&token=MoVNHexgySseNvZuQvjR-aBPsRnOST06X1YVzXW9:cDQnr9F_teCl14WrRAClT_mSMXU=", _savedFileName);
+        int res = CommonTools::download_file("http://r9emzef08.hn-bkt.clouddn.com/" + _imageKey, _savedFileName);
         //cout << "调用[%s] 结果:" << res << endl;
-        printf("调用[%s] 结果:[%d] : 调用成功,图片保存为: %s\n", actionId.c_str(), res, _savedFileName.c_str());
-
+        
+        //--// printf("调用[%s] 结果:[%d] : 调用成功,图片保存为: %s\n", actionId.c_str(), res, _savedFileName.c_str());
 
         _res["status"].SetInt(0);
 
@@ -303,7 +344,7 @@ int main(int argc, char* argv[]) {
         // int _msgLen = sprintf(_msgBuffer, "%s", outcome.GetError().GetErrorMessage().c_str()); // dynamically created string.
         // Value _msgBufferValue;
         //_msgBufferValue.SetString(_msgBuffer, _msgLen, _errorInfo.GetAllocator());
-        _errorInfo.AddMember("key", StringRef(_savedFileName.c_str()), _errorInfo.GetAllocator());
+        _errorInfo.AddMember("imageKey", StringRef(_savedFileName.c_str()), _errorInfo.GetAllocator());
 
         _res.AddMember("info", _errorInfo, _res.GetAllocator());
 

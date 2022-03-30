@@ -17,4 +17,14 @@ add_executable(remoteControl
     ./3rdparty/cxxopts/include/cxxopts.hpp
 )
 
-target_link_libraries(remoteControl tencentcloud-sdk-cpp-core tencentcloud-sdk-cpp-iotexplorer -lcurl)
+# set(LIB_TYPE STATIC)
+# set(TARGET_OUTPUT_NAME_PREFIX "tencentcloud-sdk-cpp-" CACHE STRING "The target's output name prefix")
+
+# add_subdirectory(3rdparty/tencentcloud-sdk-cpp/core)
+# add_subdirectory(3rdparty/tencentcloud-sdk-cpp/iotexplorer)
+
+#add_library(tencentcloud-sdk-cpp-core STATIC) 
+
+#find_library()
+
+target_link_libraries(remoteControl tencentcloud-sdk-cpp-core tencentcloud-sdk-cpp-iotexplorer -lcurl -lcrypto -luuid)
