@@ -1,6 +1,9 @@
-project(remoteControl)
-
 set(CMAKE_CXX_STANDARD 11)
+
+cmake_minimum_required(VERSION 3.1)
+cmake_policy(SET CMP0048 NEW)
+
+project(remoteControl)
 
 #set(CMAKE_INCLUDE_PATH "/usr/local/include/")
 
@@ -15,6 +18,7 @@ add_executable(remoteControl
     ./src/IoTPlaform.cpp
     ./src/IoTPlaform.hpp
     ./3rdparty/cxxopts/include/cxxopts.hpp
+    ./src/config.hpp
 )
 
 # set(LIB_TYPE STATIC)
@@ -27,4 +31,6 @@ add_executable(remoteControl
 
 #find_library()
 
-target_link_libraries(remoteControl tencentcloud-sdk-cpp-core tencentcloud-sdk-cpp-iotexplorer -lcurl -lcrypto -luuid)
+#include(cloud.cmake)
+
+target_link_libraries(remoteControl tencentcloud-sdk-cpp-iotexplorer.a tencentcloud-sdk-cpp-core.a  -lpthread  -lcurl -lcrypto -luuid)

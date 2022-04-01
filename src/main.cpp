@@ -1,3 +1,5 @@
+#include "config.hpp"
+
 #include <tencentcloud/core/Credential.h>
 #include <tencentcloud/core/profile/ClientProfile.h>
 #include <tencentcloud/core/profile/HttpProfile.h>
@@ -22,7 +24,6 @@ using namespace TencentCloud::Iotexplorer::V20190423::Model;
 using namespace std;
 
 using namespace rapidjson;
-
 
 #include <codecvt>  
 #include <string>  
@@ -49,26 +50,32 @@ int main(int argc, char* argv[]) {
     ("help", "Print help")
     ("s,status", "Check remote device status")
     ("a,action", "publish a action", cxxopts::value<std::string>())
-    ("d,saveto", "file save path", cxxopts::value<std::string>())
+    ("t,saveto", "file save path", cxxopts::value<std::string>())
     //("u,update", "update app[dev]", cxxopts::value<std::string>())
     //("f,file", "File name", cxxopts::value<std::string>())
     ;
 
-    if(argc == 1)
-        return -1;
-    else if(argc == 2) {
-        cout << argv[1] << endl;
+    if(argc == 1) {
+        std::cout << options.help({"", "Group"}) << std::endl;
+        exit(0);
     }
 
-    std::string deviceName = argv[1];
+    std::string deviceName;
+
+    if(argc > 1) {
+        deviceName = argv[1];
+    }
+
 
     auto result = options.parse(argc - 1, argv + 1);
 
-    if (result.count("help"))
+    if (result.arguments().size() == 0 || result.count("help") || deviceName.length() > 0 && deviceName[0] == '-')
     {
       std::cout << options.help({"", "Group"}) << std::endl;
       exit(0);
     }
+
+    //cout << "deviceName " << deviceName << endl;
 
 
     /* @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Application @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ */
@@ -81,7 +88,7 @@ int main(int argc, char* argv[]) {
 
     /* TencentCloud Init */
 
-    Credential cred = Credential("AKIDwkNo0xf8ML5ZnnY6PUJsCG4dy5wXw85n", "");
+    Credential cred = Credential(IOTPLAFORM_SECRET_ID, IOTPLAFORM_SECRET_KEY);
 
     HttpProfile httpProfile = HttpProfile();
     httpProfile.SetEndpoint("iotexplorer.tencentcloudapi.com");
@@ -96,7 +103,7 @@ int main(int argc, char* argv[]) {
     {
         DescribeDeviceRequest req = DescribeDeviceRequest();
         
-        req.SetProductId("OLER6OOJDJ");
+        req.SetProductId(IOTPLAFORM_PRODUCT_ID);
         req.SetDeviceName(deviceName);
 
         auto outcome = client.DescribeDevice(req);
@@ -193,10 +200,11 @@ int main(int argc, char* argv[]) {
 
         CallDeviceActionSyncRequest req = CallDeviceActionSyncRequest();
     
-        req.SetProductId("OLER6OOJDJ");
+        req.SetProductId(IOTPLAFORM_PRODUCT_ID);
         req.SetDeviceName(deviceName);
         req.SetActionId(actionId);
-        req.SetInputParams("{\"camera_id\": 0}");
+        //req.SetInputParams("{\"cameraId\":0,\"cbParam\":\"\",\"cbType\":0}");
+        req.SetInputParams("{\"cameraId\":0,\"cbParam\":\"\",\"cbType\":0}");
 
         auto outcome = client.CallDeviceActionSync(req);
         if (!outcome.IsSuccess())
@@ -324,7 +332,7 @@ int main(int argc, char* argv[]) {
         //组装
         string _savedFileName = _savePath + _imageKey;
 
-        int res = CommonTools::download_file("http://r9emzef08.hn-bkt.clouddn.com/" + _imageKey, _savedFileName);
+        int res = CommonTools::download_file(QINIU_UPLOAD_URL + deviceName + "/" + _imageKey, _savedFileName);
         //cout << "调用[%s] 结果:" << res << endl;
         
         //--// printf("调用[%s] 结果:[%d] : 调用成功,图片保存为: %s\n", actionId.c_str(), res, _savedFileName.c_str());
